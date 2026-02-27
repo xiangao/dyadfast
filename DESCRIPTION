@@ -1,0 +1,16 @@
+Package: dyadfast
+Title: Fast Dyadic-Robust Variance Estimation (Aronow, Samii & Assenova 2015)
+Version: 0.1.0
+Authors@R: person("Xiang", role = c("aut", "cre"), email = "x@example.com")
+Description: Vectorised O(nK) implementation of the Aronow, Samii & Assenova (2015)
+    cluster-robust variance estimator for dyadic data. Eliminates the O(m * n * K) loop
+    of existing implementations via a single scatter-add Hajek projection.
+    Algebraically equivalent to the dyadRobust loop formula for undirected networks.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports: sandwich
+Suggests:
+    testthat (>= 3.0.0),
+    fixest
+Config/testthat/edition: 3
+RoxygenNote: 7.3.3
