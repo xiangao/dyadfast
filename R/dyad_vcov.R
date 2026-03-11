@@ -5,15 +5,25 @@
 #' the O(m * n * K) agent loop in dyadRobust.
 #'
 #' The efficient formula is:
-#'   Vhat = brd \%*\% (H'H - S'S) / n^2 \%*\% brd
-#' where S is the n x K score matrix (estfun), H is the m x K matrix of
+#'   Vhat = brd \%*\% (H'H - D'D) / n^2 \%*\% brd
+#' where S is the n x K score matrix (estfun), D is the d x K matrix of
+#' dyad-level score sums (one row per unique dyad), H is the m x K matrix of
 #' agent-level score sums (H[i,] = sum of scores for all dyads involving i),
 #' and brd = n * (X'X)^(-1) is the bread.
+#'
+#' For cross-sectional data where each dyad appears once, D'D = S'S and the
+#' \code{dyad} argument can be omitted. For panel data where the same dyad
+#' appears across multiple time periods, \code{dyad} must be provided so that
+#' scores are correctly summed within each dyad before subtraction.
 #'
 #' @param fit Model object. Supports any class compatible with
 #'   \code{sandwich::estfun()} and \code{sandwich::bread()} (e.g., \code{lm}).
 #' @param ego Length-n vector of "i" agent identifiers for each observation.
 #' @param alter Length-n vector of "j" agent identifiers for each observation.
+#' @param dyad Optional length-n vector of dyad (pair) identifiers. Required
+#'   for panel data where the same pair appears in multiple observations.
+#'   When NULL (default), each observation is treated as its own dyad
+#'   (equivalent to cross-sectional data).
 #'
 #' @importFrom sandwich estfun bread sandwich
 #' @importFrom stats coef
@@ -37,7 +47,7 @@
 #' res$sehat
 #'
 #' @export
-dyad_vcov <- function(fit, ego, alter) {
+dyad_vcov <- function(fit, ego, alter, dyad = NULL) {
   S   <- sandwich::estfun(fit)   # n x K score matrix (X_i * e_i)
   brd <- sandwich::bread(fit)    # K x K: n * (X'X)^{-1}
   n   <- nrow(S)
@@ -60,11 +70,19 @@ dyad_vcov <- function(fit, ego, alter) {
 
   # Core K x K products
   HtH <- crossprod(H)   # H'H
-  StS <- crossprod(S)   # S'S
 
-  # meat = (H'H - S'S) / n  so that sandwich() gives brd %*% meat %*% brd / n
-  # = brd %*% (H'H - S'S) / n^2 %*% brd  (the desired formula)
-  meat <- (HtH - StS) / n
+  # Dyad-level subtraction: D'D where D = scores summed within each dyad
+  # For cross-sectional data (no dyad arg), D = S so D'D = S'S
+  if (is.null(dyad)) {
+    DtD <- crossprod(S)
+  } else {
+    D <- rowsum(S, as.character(dyad), reorder = FALSE)
+    DtD <- crossprod(D)
+  }
+
+  # meat = (H'H - D'D) / n  so that sandwich() gives brd %*% meat %*% brd / n
+  # = brd %*% (H'H - D'D) / n^2 %*% brd  (the desired formula)
+  meat <- (HtH - DtD) / n
   Vhat <- sandwich::sandwich(fit, bread. = brd, meat. = meat)
 
   # Enforce positive semi-definiteness
