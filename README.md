@@ -1,9 +1,9 @@
 # dyadfast
 
-Fast dyadic-robust variance estimation for R. Implements the
+`dyadfast` computes dyadic-robust variance estimates in R. It implements the
 [Aronow, Samii & Assenova (2015)](https://doi.org/10.1093/pan/mpv018)
-cluster-robust variance estimator for dyadic data via a single O(nK)
-scatter-add pass, replacing the O(m·n·K) agent loop in
+cluster-robust variance estimator for dyadic data using a single O(nK)
+scatter-add pass instead of the O(m*n*K) agent loop in
 [dyadRobust](https://github.com/wpmarble/dyadRobust).
 
 ## Installation
@@ -77,8 +77,8 @@ n = 3,454 dyads, N = 542 agents):
 | Speedup | — | **94×** |
 | Max \|SE diff\| | — | 1.6e-15 |
 
-Speedup grows with N (number of agents): dyadRobust loops over all N
-agents; dyadfast does not.
+The speedup grows with the number of agents because `dyadRobust` loops over
+agents and `dyadfast` works from the score table directly.
 
 ## References
 
